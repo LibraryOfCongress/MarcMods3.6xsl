@@ -4,7 +4,7 @@
 	<xsl:strip-space elements="*"/>
 
 	<!-- Maintenance note: For each revision, change the content of <recordInfo><recordOrigin> to reflect the new revision number.
-	MARC21slim2MODS3-5 (Revision 1.116) 20160315
+	MARC21slim2MODS3-5 (Revision 1.117) 20170214
 	
 	MODS 3.6
 	Revision 1.117 - Fixed name="corporate" RE: MODS 3.6 - 2017/2/14 tmee
@@ -2826,7 +2826,7 @@
 			</xsl:for-each>
 
 			<recordOrigin>Converted from MARCXML to MODS version 3.6 using MARC21slim2MODS3-6.xsl
-				(Revision 1.116 2016/3/15)</recordOrigin>
+				(Revision 1.117 2017/02/14)</recordOrigin>
 
 			<xsl:for-each select="marc:datafield[@tag=040]/marc:subfield[@code='b']">
 				<languageOfCataloging>
