@@ -7,6 +7,7 @@
 	MARC21slim2MODS3-5 (Revision 1.116) 20160315
 	
 	MODS 3.6
+	Revision 1.117 - Fixed name="corporate" RE: MODS 3.6 - 2017/2/14 tmee
 	Revision 1.116 - Added nameIdentifier to 700/710/711/100/110/111 $0 RE: MODS 3.6 - 2016/3/15 ws
 	Revision 1.115 - Added @otherType for 7xx RE: MODS 3.6 - 2016/3/15 ws
 	Revision 1.114 - Added <itemIdentifier> for 852$p and <itemIdentifier > with type="copy number" for 852$t RE: MODS 3.6 - 2016/3/15 ws
@@ -4517,7 +4518,7 @@
 	</xsl:template>
 
 	<xsl:template name="createNameFrom710">
-		<name typef="corporate">
+		<name type="corporate">
 			<xsl:call-template name="xxx880"/>
 			<xsl:call-template name="nameABCDN"/>
 			<xsl:call-template name="role"/>
