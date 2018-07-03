@@ -4496,7 +4496,7 @@
 	<!-- name 700 710 711 720 -->
 
 	<xsl:template name="createNameFrom700">
-		<xsl:if test="@ind1='1'">
+		<xsl:if test="@ind1='0'or @ind1='1'">
 			<name type="personal">
 				<xsl:call-template name="xxx880"/>
 				<xsl:call-template name="nameABCDQ"/>
