@@ -5119,7 +5119,6 @@
 			<xsl:call-template name="xxx880"/>
 			<xsl:call-template name="subjectAuthority"/>
 			<name type="personal">
-				<xsl:call-template name="termsOfAddress"/>
 				<namePart>
 					<xsl:call-template name="chopPunctuation">
 						<xsl:with-param name="chopString">
@@ -5129,6 +5128,7 @@
 						</xsl:with-param>
 					</xsl:call-template>
 				</namePart>
+				<xsl:call-template name="termsOfAddress"/>
 				<xsl:call-template name="nameDate"/>
 				<xsl:call-template name="affiliation"/>
 				<xsl:call-template name="role"/>
