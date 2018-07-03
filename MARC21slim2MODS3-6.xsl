@@ -4,10 +4,12 @@
 	<xsl:strip-space elements="*"/>
 
 	<!-- Maintenance note: For each revision, change the content of <recordInfo><recordOrigin> to reflect the new revision number.
-	MARC21slim2MODS3-6 (Revision 1.118) 20180621
+	MARC21slim2MODS3-6
 	
-	MODS 3.6
-	REvision 1.118 - Fixed 700 ind1=0 to transform - tmee 2018/06/21
+	MODS 3.6  (Revision 1.119) 20180621
+
+	Revision 1.119 - Fixed 700 ind1=0 to transform - tmee 2018/06/21
+	Revision 1.118 - Fixed namePart termsOfAddress subelement order - 2018/01/31 tmee
 	Revision 1.117 - Fixed name="corporate" RE: MODS 3.6 - 2017/2/14 tmee
 	Revision 1.116 - Added nameIdentifier to 700/710/711/100/110/111 $0 RE: MODS 3.6 - 2016/3/15 ws
 	Revision 1.115 - Added @otherType for 7xx RE: MODS 3.6 - 2016/3/15 ws
