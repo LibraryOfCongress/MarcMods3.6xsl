@@ -2827,7 +2827,7 @@
 			</xsl:for-each>
 
 			<recordOrigin>Converted from MARCXML to MODS version 3.6 using MARC21slim2MODS3-6.xsl
-				(Revision 1.117 2017/02/14)</recordOrigin>
+				(Revision 1.118 2018/06/21)</recordOrigin>
 
 			<xsl:for-each select="marc:datafield[@tag=040]/marc:subfield[@code='b']">
 				<languageOfCataloging>
