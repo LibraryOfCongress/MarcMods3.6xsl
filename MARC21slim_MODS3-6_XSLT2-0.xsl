@@ -8,8 +8,9 @@
 	<xsl:strip-space elements="*"/>
 	<!-- 
 		Maintenance note: For each revision, change the content of <recordInfo><recordOrigin> to reflect the new revision number.
-		MARC21slim2MODS3-5 (Revision 2.31) 2016315
+		MARC21slim2MODS3-5 (Revision 2.32) 2019319
 		
+		Revision 2.32 - Remove script attribute for elements with subfield 6, where there is no script identification code. - ws 2019/03/19
 		Revision 2.31 - Added nameIdentifier to 700/710/711/100/110/111 $0 RE: MODS 3.6 - 2016/3/15 ws
 		Revision 2.30 - Added @otherType for 7xx RE: MODS 3.6 - 2016/3/15 ws
 		Revision 2.29 - Added <itemIdentifier> for 852$p and <itemIdentifier > with type="copy number" for 852$t RE: MODS 3.6 - 2016/3/15 ws
@@ -567,7 +568,7 @@
 				</xsl:for-each>
 
 				<recordOrigin>Converted from MARCXML to MODS version 3.6 using
-					MARC21slim2MODS3-6_XSL2-0.xsl (Revision 2.31 2016/3/15)</recordOrigin>
+					MARC21slim2MODS3-6_XSL2-0.xsl (Revision 2.32 2019/3/19)</recordOrigin>
 
 				<xsl:for-each select="marc:datafield[@tag='040']/marc:subfield[@code='b']">
 					<languageOfCataloging>
@@ -4940,20 +4941,8 @@
 			<xsl:attribute name="altRepGroup">
 				<xsl:value-of select="$sf06b"/>
 			</xsl:attribute>
-			<xsl:attribute name="script">
-				<xsl:choose>
-					<xsl:when test="$scriptCode=''">Latn</xsl:when>
-					<xsl:when test="$scriptCode='(3'">Arab</xsl:when>
-					<xsl:when test="$scriptCode='(4'">Arab</xsl:when>
-					<xsl:when test="$scriptCode='(B'">Latn</xsl:when>
-					<xsl:when test="$scriptCode='!E'">Latn</xsl:when>
-					<xsl:when test="$scriptCode='$1'">CJK</xsl:when>
-					<xsl:when test="$scriptCode='(N'">Cyrl</xsl:when>
-					<xsl:when test="$scriptCode='(Q'">Cyrl</xsl:when>
-					<xsl:when test="$scriptCode='(2'">Hebr</xsl:when>
-					<xsl:when test="$scriptCode='(S'">Grek</xsl:when>
-				</xsl:choose>
-			</xsl:attribute>
+			<!-- 2.32 -->
+			<xsl:call-template name="scriptCode"/>
 		</xsl:if>
 	</xsl:template>
 	<xsl:template name="xxx7xxt">
@@ -5073,7 +5062,8 @@
 	<xsl:template name="scriptCode">
 		<xsl:variable name="sf06" select="normalize-space(marc:subfield[@code='6'])"/>
 		<xsl:variable name="scriptCode" select="substring($sf06, 8, 2)"/>
-		<xsl:if test="//marc:datafield/marc:subfield[@code='6']">
+		<!-- 2.32 -->
+		<xsl:if test="//marc:datafield/marc:subfield[@code='6'] and $scriptCode != ''">
 			<xsl:attribute name="script">
 				<xsl:choose>
 					<xsl:when test="$scriptCode=''">Latn</xsl:when>
