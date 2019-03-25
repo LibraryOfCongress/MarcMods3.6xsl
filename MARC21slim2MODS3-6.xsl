@@ -8,7 +8,11 @@
 	
 	MODS 3.6  (Revision 1.120) 20190319
 
-	Revision 1.120 - Remove script attribute for elements with subfield 6, where there is no script identification code. - ws 2019/03/19
+	Revision 1.123 - Add corresponding 880 for 830 fields with subfield 6. - ws 2019/03/25
+	Revision 1.122 - Suppress empty originInfo/issuance when leader does not match given conditions. - ws 2019/03/25
+	Revision 1.121 - Ensure 264 and corresponding 880 are output correctly. - ws 2019/03/25
+	Revision 1.120 - Remove script attribute for elements with subfield 6, where there is no script identification code. 
+				 	 Suppress duplicate 490 content via <xsl:template match="marc:datafield" mode="trans880"> - ws 2019/03/19
 	Revision 1.119 - Fixed 700 ind1=0 to transform - tmee 2018/06/21
 	Revision 1.118 - Fixed namePart termsOfAddress subelement order - 2018/01/31 tmee
 	Revision 1.117 - Fixed name="corporate" RE: MODS 3.6 - 2017/2/14 tmee
@@ -1068,7 +1072,8 @@
 				</edition>
 			</xsl:for-each>
 			<xsl:for-each select="marc:leader">
-				<issuance>
+				<!-- 1.122 -->
+				<xsl:variable name="issuance">
 					<xsl:choose>
 						<xsl:when test="$leader7='a' or $leader7='c' or $leader7='d' or $leader7='m'">monographic</xsl:when>
 						<xsl:when test="$leader7='m' and ($leader19='a' or $leader19='b' or $leader19='c')">multipart monograph</xsl:when>
@@ -1078,7 +1083,12 @@
 						<xsl:when test="$leader7='i'">integrating resource</xsl:when>
 						<xsl:when test="$leader7='b' or $leader7='s'">serial</xsl:when>
 					</xsl:choose>
-				</issuance>
+				</xsl:variable>
+				<xsl:if test="$issuance != ''">
+					<issuance>
+						<xsl:value-of select="$issuance"/>
+					</issuance>					
+				</xsl:if>
 			</xsl:for-each>
 			
 			<!-- 1.96 20140422 -->
@@ -1133,8 +1143,8 @@
 
 
 		<!-- originInfo - 264 -->
-
-		<xsl:for-each select="marc:datafield[@tag=264][@ind2=0]">
+		<!-- 1.121 -->
+		<xsl:for-each select="marc:datafield[@tag=264][@ind2=0] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=0]">
 			<originInfo eventType="production">
 				<!-- Template checks for altRepGroup - 880 $6 -->
 				<xsl:call-template name="xxx880"/>
@@ -1151,7 +1161,8 @@
 				</dateOther>
 			</originInfo>
 		</xsl:for-each>
-		<xsl:for-each select="marc:datafield[@tag=264][@ind2=1]">
+		<!-- 1.121 -->
+		<xsl:for-each select="marc:datafield[@tag=264][@ind2=1] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=1]">
 			<originInfo eventType="publication">
 				<!-- Template checks for altRepGroup - 880 $6 1.88 20130829 added chopPunc-->
 				<xsl:call-template name="xxx880"/>
@@ -1168,7 +1179,8 @@
 				</dateIssued>
 			</originInfo>
 		</xsl:for-each>
-		<xsl:for-each select="marc:datafield[@tag=264][@ind2=2]">
+		<!-- 1.121 -->
+		<xsl:for-each select="marc:datafield[@tag=264][@ind2=2] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=2]">
 			<originInfo eventType="distribution">
 				<!-- Template checks for altRepGroup - 880 $6 -->
 				<xsl:call-template name="xxx880"/>
@@ -1185,7 +1197,8 @@
 				</dateOther>
 			</originInfo>
 		</xsl:for-each>
-		<xsl:for-each select="marc:datafield[@tag=264][@ind2=3]">
+		<!-- 1.121 -->
+		<xsl:for-each select="marc:datafield[@tag=264][@ind2=3] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=3]">
 			<originInfo eventType="manufacture">
 				<!-- Template checks for altRepGroup - 880 $6 -->
 				<xsl:call-template name="xxx880"/>
@@ -1202,7 +1215,6 @@
 				</dateOther>
 			</originInfo>
 		</xsl:for-each>
-
 
 		<xsl:for-each select="marc:datafield[@tag=880]">
 			<xsl:variable name="related_datafield" select="substring-before(marc:subfield[@code='6'],'-')"/>
@@ -2070,9 +2082,10 @@
 			<xsl:call-template name="createLocationFrom856"/>
 		</xsl:for-each>
 		<!-- 1.120 -->
-		<xsl:for-each select="marc:datafield[@tag=490][@ind1=0]">
+		<xsl:for-each select="marc:datafield[@tag=490]">
 			<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 			<relatedItem type="series">
+				<xsl:if test="@ind1=1"><xsl:attribute name="type">series</xsl:attribute></xsl:if>
 				<xsl:for-each
 					select=". | ../marc:datafield[@tag='880']
 					[starts-with(marc:subfield[@code='6'],'490')]
@@ -2534,20 +2547,27 @@
 			</relatedItem>
 		</xsl:for-each>
 		<xsl:for-each select="marc:datafield[@tag='830']">
+			<!-- 1.123 -->
+			<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 			<relatedItem type="series">
-				<titleInfo>
-					<title>
-						<xsl:call-template name="chopPunctuation">
-							<xsl:with-param name="chopString">
-								<xsl:call-template name="subfieldSelect">
-									<xsl:with-param name="codes">adfgklmorsv</xsl:with-param>
-								</xsl:call-template>
-							</xsl:with-param>
-						</xsl:call-template>
-					</title>
-					<xsl:call-template name="part"/>
-				</titleInfo>
-				<xsl:call-template name="relatedForm"/>
+				<xsl:for-each
+					select=". | ../marc:datafield[@tag='880']
+					[starts-with(marc:subfield[@code='6'],'830')]
+					[substring(marc:subfield[@code='6'],5,2) = $s6]">
+					<titleInfo>
+						<title>
+							<xsl:call-template name="chopPunctuation">
+								<xsl:with-param name="chopString">
+									<xsl:call-template name="subfieldSelect">
+										<xsl:with-param name="codes">adfgklmorsv</xsl:with-param>
+									</xsl:call-template>
+								</xsl:with-param>
+							</xsl:call-template>
+						</title>
+						<xsl:call-template name="part"/>
+					</titleInfo>
+					<xsl:call-template name="relatedForm"/>
+				</xsl:for-each>
 			</relatedItem>
 		</xsl:for-each>
 		<xsl:for-each select="marc:datafield[@tag='856'][@ind2='2']/marc:subfield[@code='q']">
@@ -3719,6 +3739,7 @@
 		<xsl:variable name="sf06b" select="substring($sf06, 5, 2)"/>
 		<xsl:variable name="sf06c" select="substring($sf06, 7)"/>
 		<xsl:variable name="scriptCode" select="substring($sf06, 8, 2)"/>
+		<!-- 1.120 -->
 		<xsl:if test="//marc:datafield/marc:subfield[@code='6'] and $scriptCode != ''">
 			<xsl:attribute name="script">
 				<xsl:choose>
@@ -4216,10 +4237,8 @@
 			<xsl:when test="$sf06a='856'">
 				<xsl:call-template name="createLocationFrom856"/>
 			</xsl:when>
-
-			<xsl:when test="$sf06a='490'">
-				<xsl:call-template name="createRelatedItemFrom490"/>
-			</xsl:when>
+			<!-- 1.120-->
+			<xsl:when test="$sf06a='490'"/>
 		</xsl:choose>
 	</xsl:template>
 
