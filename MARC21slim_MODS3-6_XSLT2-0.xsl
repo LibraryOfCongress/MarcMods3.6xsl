@@ -10,6 +10,10 @@
 		Maintenance note: For each revision, change the content of <recordInfo><recordOrigin> to reflect the new revision number.
 		MARC21slim2MODS3-5 (Revision 2.32) 2019319
 		
+		Revision 2.36 - Changed all relatedItem 880/subfield[@code=6] rules to use '=' rather than 'match()' to find corresponding data. - ws 2019/03/25 
+		Revision 2.35 - Add type='series' to 490 only if @ind1 = '0'. - ws 2019/03/25
+		Revision 2.34 - Add 880 for subfield 264 with subfield 6. - ws 2019/03/25
+		Revision 2.33 - Suppress empty originInfo/issuance when leader does not match given conditions. - ws 2019/03/25
 		Revision 2.32 - Remove script attribute for elements with subfield 6, where there is no script identification code. - ws 2019/03/19
 		Revision 2.31 - Added nameIdentifier to 700/710/711/100/110/111 $0 RE: MODS 3.6 - 2016/3/15 ws
 		Revision 2.30 - Added @otherType for 7xx RE: MODS 3.6 - 2016/3/15 ws
@@ -477,7 +481,8 @@
 
 			<!-- Call templates for related item -->
 			<!-- series -->
-			<xsl:apply-templates select="marc:datafield[@tag='490'][@ind1='0']" mode="relatedItem"/>
+			<!-- 2.35 -->
+			<xsl:apply-templates select="marc:datafield[@tag='490']" mode="relatedItem"/>
 			<xsl:apply-templates select="marc:datafield[@tag='440']" mode="relatedItem"/>
 			<!-- isReferencedBy -->
 			<xsl:apply-templates select="marc:datafield[@tag='510']" mode="relatedItem"/>
@@ -1523,7 +1528,8 @@
 					mode="orginInfo"/>
 
 				<!-- Build issuance element -->
-				<issuance>
+				<!-- 2.33 -->
+				<xsl:variable name="issuance">
 					<xsl:choose>
 						<xsl:when
 							test="$leader7='a' or $leader7='c' or $leader7='d' or $leader7='m'"
@@ -1538,7 +1544,12 @@
 						<xsl:when test="$leader7='i'">integrating resource</xsl:when>
 						<xsl:when test="$leader7='s'">serial</xsl:when>
 					</xsl:choose>
-				</issuance>
+				</xsl:variable>
+				<xsl:if test="$issuance != ''">
+					<issuance>
+						<xsl:value-of select="$issuance"/>
+					</issuance>					
+				</xsl:if>
 				<!-- Build frequency element -->
 				<xsl:apply-templates select="marc:datafield[@tag='310']|marc:datafield[@tag='321']"
 					mode="orginInfo"/>
@@ -1639,7 +1650,8 @@
 		</xsl:if>
 	</xsl:template>
 	<!-- 2.13 WS: added 264 to orginInfo -->
-	<xsl:template match="marc:datafield[@tag='264']" mode="orginInfo">
+	<!-- 2.34 -->
+	<xsl:template match="marc:datafield[@tag='264'] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')]" mode="orginInfo">
 		<xsl:if test="@ind2 ='0' or @ind2 ='1'or @ind2 ='2' or @ind2 ='3'">
 			<originInfo>
 				<!-- Removed displayLabel according to http://www.loc.gov/standards/mods/mods-mapping.html
@@ -4020,11 +4032,15 @@
 	</xsl:template>
 
 	<!-- Related Item templates -->
-	<xsl:template match="marc:datafield[@tag='490'][@ind1='0']" mode="relatedItem">
+	<!--2.35 -->
+	<xsl:template match="marc:datafield[@tag='490']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
-		<relatedItem type="series">
+		<relatedItem>
+			<!-- 2.35 -->
+			<xsl:if test="@ind1 = '0'"><xsl:attribute name="type">series</xsl:attribute></xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'490')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'490')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<!-- Template checks for altRepGroup - 880 $6 -->
 					<xsl:call-template name="xxx880"/>
@@ -4044,8 +4060,9 @@
 	<xsl:template match="marc:datafield[@tag='440']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="series">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'440')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'440')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<!-- Template checks for altRepGroup - 880 $6 -->
 					<xsl:call-template name="xxx880"/>
@@ -4060,8 +4077,9 @@
 	<xsl:template match="marc:datafield[@tag='510']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="isReferencedBy">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'510')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'510')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<xsl:for-each select="marc:subfield[@code='a']">
 					<titleInfo>
 						<!-- Template checks for altRepGroup - 880 $6 -->
@@ -4091,8 +4109,9 @@
 	<xsl:template match="marc:datafield[@tag='534']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="original">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'534')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'534')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<!-- call title template -->
 				<xsl:apply-templates select="marc:subfield[@code='t']" mode="relatedItem"/>
 				<!-- call name template -->
@@ -4130,8 +4149,9 @@
 			<xsl:if test="marc:subfield[@code='i']">
 				<xsl:attribute name="otherType"><xsl:value-of select="marc:subfield[@code='i']"/></xsl:attribute>
 			</xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)][marc:subfield[@code='t']]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6][marc:subfield[@code='t']]">
 				<titleInfo>
 					<xsl:call-template name="xxx7xxt"/>
 					<title>
@@ -4169,8 +4189,9 @@
 			<xsl:if test="marc:subfield[@code='i']">
 				<xsl:attribute name="otherType"><xsl:value-of select="marc:subfield[@code='i']"/></xsl:attribute>
 			</xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)][marc:subfield[@code='t']]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6][marc:subfield[@code='t']]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4221,8 +4242,9 @@
 			<xsl:if test="marc:subfield[@code='i']">
 				<xsl:attribute name="otherType"><xsl:value-of select="marc:subfield[@code='i']"/></xsl:attribute>
 			</xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)][marc:subfield[@code='t']]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6][marc:subfield[@code='t']]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4256,8 +4278,9 @@
 			<xsl:if test="marc:subfield[@code='i']">
 				<xsl:attribute name="otherType"><xsl:value-of select="marc:subfield[@code='i']"/></xsl:attribute>
 			</xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'730')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'730')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4284,8 +4307,9 @@
 			<xsl:if test="marc:subfield[@code='i']">
 				<xsl:attribute name="otherType"><xsl:value-of select="marc:subfield[@code='i']"/></xsl:attribute>
 			</xsl:if>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'730')][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'730')][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4349,8 +4373,9 @@
 					</xsl:attribute>
 				</xsl:when>
 			</xsl:choose>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<!-- title -->
 				<xsl:for-each select="marc:subfield[@code='t']">
 					<titleInfo>
@@ -4460,8 +4485,9 @@
 	<xsl:template match="marc:datafield[@tag='800']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="series">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4492,8 +4518,9 @@
 	<xsl:template match="marc:datafield[@tag='810']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="series">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4532,8 +4559,9 @@
 	<xsl:template match="marc:datafield[@tag='811']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="series">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4562,8 +4590,9 @@
 	<xsl:template match="marc:datafield[@tag='830']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem type="series">
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<titleInfo>
 					<xsl:call-template name="xxx880"/>
 					<title>
@@ -4581,8 +4610,9 @@
 	<xsl:template match="marc:datafield[@tag='856'][@ind2='2']" mode="relatedItem">
 		<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 		<relatedItem>
+			<!-- 2.36 -->
 			<xsl:for-each
-				select=". | ../marc:datafield[@tag='880'][matches(substring(marc:subfield[@code='6'],5,2),$s6)]">
+				select=". | ../marc:datafield[@tag='880'][substring(marc:subfield[@code='6'],5,2) = $s6]">
 				<xsl:if test="marc:subfield[@code='q']">
 					<physicalDescription>
 						<xsl:call-template name="xxx880"/>
