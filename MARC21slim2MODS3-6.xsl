@@ -2084,7 +2084,7 @@
 		<!-- 1.120 -->
 		<xsl:for-each select="marc:datafield[@tag=490]">
 			<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
-			<relatedItem type="series">
+			<relatedItem>
 				<xsl:if test="@ind1=1"><xsl:attribute name="type">series</xsl:attribute></xsl:if>
 				<xsl:for-each
 					select=". | ../marc:datafield[@tag='880']
@@ -2555,6 +2555,7 @@
 					[starts-with(marc:subfield[@code='6'],'830')]
 					[substring(marc:subfield[@code='6'],5,2) = $s6]">
 					<titleInfo>
+						<xsl:call-template name="xxx880"/>
 						<title>
 							<xsl:call-template name="chopPunctuation">
 								<xsl:with-param name="chopString">
@@ -2566,7 +2567,7 @@
 						</title>
 						<xsl:call-template name="part"/>
 					</titleInfo>
-					<xsl:call-template name="relatedForm"/>
+					<xsl:call-template name="relatedForm"/>					
 				</xsl:for-each>
 			</relatedItem>
 		</xsl:for-each>
