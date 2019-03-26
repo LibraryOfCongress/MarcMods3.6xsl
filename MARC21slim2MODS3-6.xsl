@@ -6,13 +6,14 @@
 	<!-- Maintenance note: For each revision, change the content of <recordInfo><recordOrigin> to reflect the new revision number.
 	MARC21slim2MODS3-6
 	
-	MODS 3.6  (Revision 1.120) 20190319
+	MODS 3.6  (Revision 1.125) 20190325
 
-	Revision 1.123 - Add corresponding 880 for 830 fields with subfield 6. - ws 2019/03/25
-	Revision 1.122 - Suppress empty originInfo/issuance when leader does not match given conditions. - ws 2019/03/25
-	Revision 1.121 - Ensure 264 and corresponding 880 are output correctly. - ws 2019/03/25
-	Revision 1.120 - Remove script attribute for elements with subfield 6, where there is no script identification code. 
-				 	 Suppress duplicate 490 content via <xsl:template match="marc:datafield" mode="trans880"> - ws 2019/03/19
+	Revision 1.125 - Add corresponding 880 for 830 fields with subfield 6. - ws 2019/03/25
+	Revision 1.124 - Add 880 output for 264 with corresponding subfield 6. - ws 2019/03/25
+	Revision 1.123 - Suppress empty orginInfo/issuance when leader does not match given conditions in XSLT.  - ws 2019/03/25
+	Revision 1.122 - Remove ind1=1 constraint on template match 490 so all 490 fields output correctly, add series to 490 if @ind1='1' - ws 2019/03/25
+	Revision 1.121 - Combine 490 and corresponding 880 data-fields into a single relatedItem with a titleInfo for each with the corresponding altRepGroup. - ws 2019/03/25  
+	Revision 1.120 - Remove invalid script attributes. Script function was incorrectly interpreting an empty value as Latin script. Now empty value does not create a script attribute. - ws 2019/03/25	
 	Revision 1.119 - Fixed 700 ind1=0 to transform - tmee 2018/06/21
 	Revision 1.118 - Fixed namePart termsOfAddress subelement order - 2018/01/31 tmee
 	Revision 1.117 - Fixed name="corporate" RE: MODS 3.6 - 2017/2/14 tmee
@@ -1072,7 +1073,7 @@
 				</edition>
 			</xsl:for-each>
 			<xsl:for-each select="marc:leader">
-				<!-- 1.122 -->
+				<!-- 1.123 -->
 				<xsl:variable name="issuance">
 					<xsl:choose>
 						<xsl:when test="$leader7='a' or $leader7='c' or $leader7='d' or $leader7='m'">monographic</xsl:when>
@@ -1143,7 +1144,7 @@
 
 
 		<!-- originInfo - 264 -->
-		<!-- 1.121 -->
+		<!-- 1.124 -->
 		<xsl:for-each select="marc:datafield[@tag=264][@ind2=0] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=0]">
 			<originInfo eventType="production">
 				<!-- Template checks for altRepGroup - 880 $6 -->
@@ -1161,7 +1162,7 @@
 				</dateOther>
 			</originInfo>
 		</xsl:for-each>
-		<!-- 1.121 -->
+		<!-- 1.124 -->
 		<xsl:for-each select="marc:datafield[@tag=264][@ind2=1] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=1]">
 			<originInfo eventType="publication">
 				<!-- Template checks for altRepGroup - 880 $6 1.88 20130829 added chopPunc-->
@@ -1179,7 +1180,7 @@
 				</dateIssued>
 			</originInfo>
 		</xsl:for-each>
-		<!-- 1.121 -->
+		<!-- 1.124 -->
 		<xsl:for-each select="marc:datafield[@tag=264][@ind2=2] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=2]">
 			<originInfo eventType="distribution">
 				<!-- Template checks for altRepGroup - 880 $6 -->
@@ -1197,7 +1198,7 @@
 				</dateOther>
 			</originInfo>
 		</xsl:for-each>
-		<!-- 1.121 -->
+		<!-- 1.124 -->
 		<xsl:for-each select="marc:datafield[@tag=264][@ind2=3] | marc:datafield[@tag='880'][starts-with(marc:subfield[@code='6'],'264')][@ind2=3]">
 			<originInfo eventType="manufacture">
 				<!-- Template checks for altRepGroup - 880 $6 -->
@@ -2081,11 +2082,12 @@
 		<xsl:for-each select="marc:datafield[@tag=856]">
 			<xsl:call-template name="createLocationFrom856"/>
 		</xsl:for-each>
-		<!-- 1.120 -->
+		<!-- 1.122 -->
 		<xsl:for-each select="marc:datafield[@tag=490]">
 			<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 			<relatedItem>
 				<xsl:if test="@ind1=1"><xsl:attribute name="type">series</xsl:attribute></xsl:if>
+				<!-- 1.121 -->
 				<xsl:for-each
 					select=". | ../marc:datafield[@tag='880']
 					[starts-with(marc:subfield[@code='6'],'490')]
@@ -2547,7 +2549,7 @@
 			</relatedItem>
 		</xsl:for-each>
 		<xsl:for-each select="marc:datafield[@tag='830']">
-			<!-- 1.123 -->
+			<!-- 1.125 -->
 			<xsl:variable name="s6" select="substring(normalize-space(marc:subfield[@code='6']), 5, 2)"/>
 			<relatedItem type="series">
 				<xsl:for-each
@@ -2871,7 +2873,7 @@
 			</xsl:for-each>
 
 			<recordOrigin>Converted from MARCXML to MODS version 3.6 using MARC21slim2MODS3-6.xsl
-				(Revision 1.120 2019/03/19)</recordOrigin>
+				(Revision 1.125 2019/03/25)</recordOrigin>
 
 			<xsl:for-each select="marc:datafield[@tag=040]/marc:subfield[@code='b']">
 				<languageOfCataloging>
@@ -4238,7 +4240,7 @@
 			<xsl:when test="$sf06a='856'">
 				<xsl:call-template name="createLocationFrom856"/>
 			</xsl:when>
-			<!-- 1.120-->
+			<!-- 1.121-->
 			<xsl:when test="$sf06a='490'"/>
 		</xsl:choose>
 	</xsl:template>
